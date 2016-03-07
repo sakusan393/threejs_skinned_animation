@@ -152,6 +152,8 @@
     var actionKashiyuka = {}
     var actionNocchi = {}
 
+    meshFlg = true;
+
     width = window.innerWidth;
     height = window.innerHeight;
     clock = new THREE.Clock();
@@ -231,7 +233,6 @@
         });
         shadermaterial.skinning = true;
 
-        meshFlg = true;
 
         if(meshFlg){
             meshAachan = new THREE.SkinnedMesh(
@@ -303,7 +304,6 @@
         });
         shadermaterial.skinning = true;
 
-        meshFlg = true;
 
         if (meshFlg) {
             meshNocchi = new THREE.SkinnedMesh(
@@ -371,7 +371,6 @@
         });
         shadermaterial.skinning = true;
 
-        meshFlg = true;
 
         if (meshFlg) {
             meshKashiyuka = new THREE.SkinnedMesh(
