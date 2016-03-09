@@ -51,12 +51,13 @@
 <div class="info">
     <button onclick="fadeAction( 'idle' );">idle</button>
     <button onclick="fadeAction( 'run' );">run</button>
+    <button onclick="fadeAction( 'kick' );">kick</button>
     <div id="loading"><img src="images/loading-36.gif"/></div>
     <p><a href="http://yomotsu.net/blog/2015/10/31/three-r73-anim.html">ヨモツネット:New skinned mesh animation system in
         three.js r73 and r74</a></p>
 </div>
 
-<script src="js/three.js"></script>
+<script src="js/three.min.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
 
 
@@ -177,7 +178,7 @@
 
     'use strict';
 
-    var width, height, clock, scene, sceneEdge, camera, renderer, meshFlg, controls;
+    var width, height, clock, scene, sceneEdge, camera, renderer, meshFlg, activeActionName,controls;
     var loader = new THREE.JSONLoader();
     var ambientLight, mesh, meshEdge, action = {}, mixer,mixerEdge, fadeAction;
 
@@ -190,7 +191,7 @@
     camera.position.set(0, 1, 4);
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
-    renderer.setClearColor(0xf0e0c0);
+    renderer.setClearColor(0xffffff);
     renderer.autoClear = false;
     document.body.appendChild(renderer.domElement);
 
@@ -282,27 +283,44 @@
 
         mixer = new THREE.AnimationMixer(mesh);
         mixerEdge = new THREE.AnimationMixer(meshEdge);
-        action.idle = mixer.clipAction(geometry.animations[2]);
+        console.log(geometry.animations)
+        action.idle = mixer.clipAction(geometry.animations[1]);
+        action.kick = mixer.clipAction(geometry.animations[2]);
         action.run = mixer.clipAction(geometry.animations[3]);
-        action.idleEdge = mixerEdge.clipAction(geometry.animations[2]);
+        action.idleEdge = mixerEdge.clipAction(geometry.animations[1]);
+        action.kickEdge = mixerEdge.clipAction(geometry.animations[2]);
         action.runEdge = mixerEdge.clipAction(geometry.animations[3]);
 
         action.run.setEffectiveWeight(2);
-        action.idle.setEffectiveWeight(2);
         action.runEdge.setEffectiveWeight(2);
+        action.idle.setEffectiveWeight(2);
         action.idleEdge.setEffectiveWeight(2);
+        action.kick.setEffectiveWeight(2);
+        action.kickEdge.setEffectiveWeight(2);
 
-        action.run.setDuration(1.3).play();
-        action.runEdge.setDuration(1.3).play();
+        action.run.setDuration(2)
+        action.runEdge.setDuration(2)
+        action.kick.setDuration(3.3).play();
+        action.kickEdge.setDuration(3.3).play();
 
         onWindowResize();
+
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000, wireframe: true});
+        planeMaterial.side = THREE.doubleSided;
+        var plane =  new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20, 20, 20),
+                planeMaterial
+        );
+        plane.rotation.x = Math.PI / 180 * 90;
+
+        scene.add(plane);
 
     });
 
 
     fadeAction = function () {
 
-        var activeActionName = 'run';
+        activeActionName = 'kick';
 
         return function (name) {
 
