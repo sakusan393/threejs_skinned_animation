@@ -35,7 +35,8 @@
             padding: 10px;
             margin: 10px;
         }
-        #loading{
+
+        #loading {
             margin-top: 100px
         }
 
@@ -50,30 +51,67 @@
 <div class="info">
     <button onclick="fadeAction( 'idle' );">idle</button>
     <button onclick="fadeAction( 'run' );">run</button>
-    <div id="loading"><img src="images/loading-36.gif" /></div>
+    <div id="loading"><img src="images/loading-36.gif"/></div>
     <p><a href="http://yomotsu.net/blog/2015/10/31/three-r73-anim.html">ヨモツネット:New skinned mesh animation system in
         three.js r73 and r74</a></p>
 </div>
 
-<script src="js/three.min.js"></script>
+<script src="js/three.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
 
 
 <script type="x-shader/x-vertex" id="vs">
-	varying vec2 vUv;
-	#ifdef USE_SKINNING
-	 	varying vec3 vViewPosition;
-		varying vec3 vNormal;
-        uniform bool edge;
+    #ifdef USE_SKINNING
 
-		uniform mat4 bindMatrix;
-		uniform mat4 bindMatrixInverse;
-		uniform mat4 boneGlobalMatrices[ MAX_BONES ];
-		mat4 getBoneMatrix( const in float i ) {
-			mat4 bone = boneGlobalMatrices[ int(i) ];
-			return bone;
-		}
-	#endif
+        uniform mat4 bindMatrix;
+        uniform mat4 bindMatrixInverse;
+
+        #ifdef BONE_TEXTURE
+
+            uniform sampler2D boneTexture;
+            uniform int boneTextureWidth;
+            uniform int boneTextureHeight;
+
+            mat4 getBoneMatrix( const in float i ) {
+
+                float j = i * 4.0;
+                float x = mod( j, float( boneTextureWidth ) );
+                float y = floor( j / float( boneTextureWidth ) );
+
+                float dx = 1.0 / float( boneTextureWidth );
+                float dy = 1.0 / float( boneTextureHeight );
+
+                y = dy * ( y + 0.5 );
+
+                vec4 v1 = texture2D( boneTexture, vec2( dx * ( x + 0.5 ), y ) );
+                vec4 v2 = texture2D( boneTexture, vec2( dx * ( x + 1.5 ), y ) );
+                vec4 v3 = texture2D( boneTexture, vec2( dx * ( x + 2.5 ), y ) );
+                vec4 v4 = texture2D( boneTexture, vec2( dx * ( x + 3.5 ), y ) );
+
+                mat4 bone = mat4( v1, v2, v3, v4 );
+
+                return bone;
+
+            }
+
+        #else
+
+            uniform mat4 boneGlobalMatrices[ MAX_BONES ];
+
+            mat4 getBoneMatrix( const in float i ) {
+
+                mat4 bone = boneGlobalMatrices[ int(i) ];
+                return bone;
+
+            }
+
+        #endif
+
+    #endif
+
+	varying vec2 vUv;
+    uniform bool edge;
+    varying vec3 vNormal;
 	void main() {
 		vUv = uv;
 		#ifdef USE_SKINNING
@@ -109,6 +147,7 @@
 		gl_Position = projectionMatrix * mvPosition;
 	}
 
+
 </script>
 <script type="x-shader/x-fragment" id="fs">
 
@@ -131,15 +170,16 @@
         }
     }
 
+
 </script>
 
 <script>
 
     'use strict';
 
-    var width, height, clock, scene,sceneEdge, camera, renderer,meshFlg,controls;
+    var width, height, clock, scene, sceneEdge, camera, renderer, meshFlg, controls;
     var loader = new THREE.JSONLoader();
-    var ambientLight, mesh,meshEdge, action = {}, mixer, fadeAction;
+    var ambientLight, mesh, meshEdge, action = {}, mixer,mixerEdge, fadeAction;
 
     width = window.innerWidth;
     height = window.innerHeight;
@@ -154,14 +194,14 @@
     renderer.autoClear = false;
     document.body.appendChild(renderer.domElement);
 
-    controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
     //controls.addEventListener( 'change', render ); // add this only if there is no animation loop (requestAnimationFrame)
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
     controls.enableZoom = true;
     controls.autoRotate = true;
     controls.autoRotateSpeed = .4
-    controls.target = new THREE.Vector3(0,1,0);
+    controls.target = new THREE.Vector3(0, 1, 0);
 
 
     ambientLight = new THREE.AmbientLight(0xffffff);
@@ -214,22 +254,22 @@
 
         meshFlg = true;
 
-        if(meshFlg){
+        if (meshFlg) {
             mesh = new THREE.SkinnedMesh(
                     geometry,
-                    shadermaterial,false
+                    shadermaterial, true
             );
-        }else{
-                materials.forEach(function (material) {
-                    material.skinning = true;
-                });
+        } else {
+            materials.forEach(function (material) {
+                material.skinning = true;
+            });
 
             mesh = new THREE.SkinnedMesh(
                     geometry,
                     new THREE.MeshFaceMaterial(materials), true
             );
         }
-        for(var i=0; i < geometry.animations.length; i++){
+        for (var i = 0; i < geometry.animations.length; i++) {
             console.log(geometry.animations[i].name)
         }
 
@@ -241,13 +281,19 @@
         sceneEdge.add(meshEdge);
 
         mixer = new THREE.AnimationMixer(mesh);
+        mixerEdge = new THREE.AnimationMixer(meshEdge);
         action.idle = mixer.clipAction(geometry.animations[2]);
         action.run = mixer.clipAction(geometry.animations[3]);
+        action.idleEdge = mixerEdge.clipAction(geometry.animations[2]);
+        action.runEdge = mixerEdge.clipAction(geometry.animations[3]);
 
         action.run.setEffectiveWeight(2);
         action.idle.setEffectiveWeight(2);
+        action.runEdge.setEffectiveWeight(2);
+        action.idleEdge.setEffectiveWeight(2);
 
         action.run.setDuration(1.3).play();
+        action.runEdge.setDuration(1.3).play();
 
         onWindowResize();
 
@@ -262,11 +308,16 @@
 
             var from = action[activeActionName].play();
             var to = action[name].play();
+            var fromEdge = action[activeActionName+"Edge"].play();
+            var toEdge = action[name+"Edge"].play();
 
             from.enabled = true;
             to.enabled = true;
+            fromEdge.enabled = true;
+            toEdge.enabled = true;
 
             from.crossFadeTo(to, .3);
+            fromEdge.crossFadeTo(toEdge, .3);
             activeActionName = name;
 
         }
@@ -280,17 +331,17 @@
         requestAnimationFrame(update);
 
         var delta = clock.getDelta();
-        var theta = clock.getElapsedTime();
 
         if (mixer) {
-            mixer.update(delta*1);
+            mixer.update(delta * 1);
+            mixerEdge.update(delta * 1);
         }
         controls.update();
 
         renderer.clear();
 
         if (meshFlg && meshEdge) {
-            if(document.getElementById("loading")) document.getElementById("loading").parentNode.removeChild(document.getElementById("loading"))
+            if (document.getElementById("loading")) document.getElementById("loading").parentNode.removeChild(document.getElementById("loading"))
             meshEdge.material.side = THREE.FrontSide;
             mesh.material.uniforms.edgeColor.value = new THREE.Vector4(0, 0, 0, 0);
             mesh.material.uniforms.edge.value = false;
