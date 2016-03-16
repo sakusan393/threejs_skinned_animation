@@ -319,13 +319,14 @@
         scene.add(meshAachan);
 
         mixerAachan = new THREE.AnimationMixer(meshAachan);
-        action.idle = mixerAachan.clipAction(geometry.animations[0]);
-        action.run = mixerAachan.clipAction(geometry.animations[2]);
+        actionAachan.idle = mixerAachan.clipAction(geometry.animations[0]);
+        actionAachan.run = mixerAachan.clipAction(geometry.animations[2]);
 
-        action.run.setEffectiveWeight(2);
-        action.idle.setEffectiveWeight(2);
+        actionAachan.run.setEffectiveWeight(2);
+        actionAachan.idle.setEffectiveWeight(2);
 
-        action.run.play();
+        actionAachan.run.setLoop(THREE.LoopOnce, 0)
+        actionAachan.run.play();
 
         onWindowResize();
 
@@ -393,6 +394,7 @@
         actionNocchi.run.setEffectiveWeight(2);
         actionNocchi.idle.setEffectiveWeight(2);
 
+        actionNocchi.run.setLoop(THREE.LoopOnce, 0);
         actionNocchi.run.play();
 
         onWindowResize();
@@ -460,6 +462,7 @@
         actionKashiyuka.run.setEffectiveWeight(2);
         actionKashiyuka.idle.setEffectiveWeight(2);
 
+        actionKashiyuka.run.setLoop(THREE.LoopOnce, 0);
         actionKashiyuka.run.play();
 
         onWindowResize();
@@ -502,7 +505,7 @@
             mixerNocchi.update(0);
             mixerKashiyuka.update(0);
             mixerAachan.update(0);
-            addClass(document.getElementById("start-button"), "show");
+            if (!isSoundPlay) addClass(document.getElementById("start-button"), "show");
         }
 
         renderer.clear();
@@ -516,7 +519,7 @@
 
         if (meshFlg) {
             meshAachanEdge.material.side = THREE.BackSide;
-            meshAachanEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0, 0, 1);
+            meshAachanEdge.material.uniforms.edgeColor.value = new THREE.Vector4(0.33, 0.33, 0.33, 1);
             meshAachanEdge.material.uniforms.edge.value = true;
             renderer.render(scene, camera);
         }
@@ -530,7 +533,7 @@
 
         if (meshFlg) {
             meshNocchiEdge.material.side = THREE.BackSide;
-            meshNocchiEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0, 0, 1);
+            meshNocchiEdge.material.uniforms.edgeColor.value = new THREE.Vector4(0.2, 0.2, 0.6, 1);
             meshNocchiEdge.material.uniforms.edge.value = true;
             renderer.render(scene, camera);
         }
@@ -544,7 +547,7 @@
 
         if (meshFlg) {
             meshKashiyukaEdge.material.side = THREE.BackSide;
-            meshKashiyukaEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0, 0, 1);
+            meshKashiyukaEdge.material.uniforms.edgeColor.value = new THREE.Vector4(0.2, 0.6, 0.2, 1);
             meshKashiyukaEdge.material.uniforms.edge.value = true;
             renderer.render(scene, camera);
         }
@@ -574,19 +577,27 @@
     }
 
     var audio = new Audio();
-
     audio.volume = 0.3;
     audio.autoplay = false
     audio.addEventListener("canplay", function(){
         audio.play();
     });
+    audio.addEventListener("ended", function(){
+        isSoundPlay = false;
+    });
 
     audio.addEventListener("playing", function(){
         isSoundPlay = true;
+        removeClass(document.getElementById("start-button"), "show");
     });
 
     function soundPlay(){
-//        document.getElementById("start-button").parentNode.removeChild(document.getElementById("start-button"))
+        actionAachan.run.reset();
+        actionAachan.run.play();
+        actionNocchi.run.reset();
+        actionNocchi.run.play();
+        actionKashiyuka.run.reset();
+        actionKashiyuka.run.play();
         audio.src = "sound/pgp_bgm.mp3"
         audio.load();
     }

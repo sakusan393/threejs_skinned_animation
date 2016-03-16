@@ -178,7 +178,7 @@
 
     'use strict';
 
-    var width, height, clock, scene, sceneEdge, camera, renderer, meshFlg, activeActionName,controls;
+    var width, height, clock, scene, camera, renderer, meshFlg, activeActionName,controls;
     var loader = new THREE.JSONLoader();
     var ambientLight, mesh, meshEdge, action = {}, mixer,mixerEdge, fadeAction;
 
@@ -186,7 +186,6 @@
     height = window.innerHeight;
     clock = new THREE.Clock();
     scene = new THREE.Scene();
-    sceneEdge = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(40, width / height, 1, 100);
     camera.position.set(0, 1, 4);
     renderer = new THREE.WebGLRenderer();
@@ -279,30 +278,21 @@
         meshEdge = mesh.clone();
 
         scene.add(mesh);
-        sceneEdge.add(meshEdge);
 
         mixer = new THREE.AnimationMixer(mesh);
-        mixerEdge = new THREE.AnimationMixer(meshEdge);
         console.log(geometry.animations)
         action.idle = mixer.clipAction(geometry.animations[1]);
         action.kick = mixer.clipAction(geometry.animations[2]);
         action.run = mixer.clipAction(geometry.animations[3]);
-        action.idleEdge = mixerEdge.clipAction(geometry.animations[1]);
-        action.kickEdge = mixerEdge.clipAction(geometry.animations[2]);
-        action.runEdge = mixerEdge.clipAction(geometry.animations[3]);
 
         action.run.setEffectiveWeight(2);
-        action.runEdge.setEffectiveWeight(2);
+        action.run.setLoop(THREE.LoopOnce, 0);
+        action.run.clampWhenFinished = true;
         action.idle.setEffectiveWeight(2);
-        action.idleEdge.setEffectiveWeight(2);
         action.kick.setEffectiveWeight(2);
-        action.kickEdge.setEffectiveWeight(2);
 
         action.run.setDuration(2)
-        action.runEdge.setDuration(2)
         action.kick.setDuration(3.3).play();
-        action.kickEdge.setDuration(3.3).play();
-
         onWindowResize();
 
         var planeMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000, wireframe: true});
@@ -325,17 +315,13 @@
         return function (name) {
 
             var from = action[activeActionName].play();
+            var to = action[name].reset();
             var to = action[name].play();
-            var fromEdge = action[activeActionName+"Edge"].play();
-            var toEdge = action[name+"Edge"].play();
 
             from.enabled = true;
             to.enabled = true;
-            fromEdge.enabled = true;
-            toEdge.enabled = true;
 
             from.crossFadeTo(to, .3);
-            fromEdge.crossFadeTo(toEdge, .3);
             activeActionName = name;
 
         }
@@ -352,7 +338,6 @@
 
         if (mixer) {
             mixer.update(delta * 1);
-            mixerEdge.update(delta * 1);
         }
         controls.update();
 
@@ -370,7 +355,7 @@
             meshEdge.material.side = THREE.BackSide;
             meshEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0, 0, 1);
             meshEdge.material.uniforms.edge.value = true;
-            renderer.render(sceneEdge, camera);
+            renderer.render(scene, camera);
         }
 
     })();
