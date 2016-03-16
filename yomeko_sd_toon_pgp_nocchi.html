@@ -49,23 +49,60 @@
     <p>motion data from <a href="http://www.perfume-global.com" target="_blank">"http://perfume-global.com/project.html"</a></p>
 </div>
 
-<script src="js/three.min.js"></script>
+<script src="js/three.min.75.js"></script>
 
 <script type="x-shader/x-vertex" id="vs">
-	varying vec2 vUv;
-	#ifdef USE_SKINNING
-	 	varying vec3 vViewPosition;
-		varying vec3 vNormal;
-        uniform bool edge;
+    #ifdef USE_SKINNING
 
-		uniform mat4 bindMatrix;
-		uniform mat4 bindMatrixInverse;
-		uniform mat4 boneGlobalMatrices[ MAX_BONES ];
-		mat4 getBoneMatrix( const in float i ) {
-			mat4 bone = boneGlobalMatrices[ int(i) ];
-			return bone;
-		}
-	#endif
+        uniform mat4 bindMatrix;
+        uniform mat4 bindMatrixInverse;
+
+        #ifdef BONE_TEXTURE
+
+            uniform sampler2D boneTexture;
+            uniform int boneTextureWidth;
+            uniform int boneTextureHeight;
+
+            mat4 getBoneMatrix( const in float i ) {
+
+                float j = i * 4.0;
+                float x = mod( j, float( boneTextureWidth ) );
+                float y = floor( j / float( boneTextureWidth ) );
+
+                float dx = 1.0 / float( boneTextureWidth );
+                float dy = 1.0 / float( boneTextureHeight );
+
+                y = dy * ( y + 0.5 );
+
+                vec4 v1 = texture2D( boneTexture, vec2( dx * ( x + 0.5 ), y ) );
+                vec4 v2 = texture2D( boneTexture, vec2( dx * ( x + 1.5 ), y ) );
+                vec4 v3 = texture2D( boneTexture, vec2( dx * ( x + 2.5 ), y ) );
+                vec4 v4 = texture2D( boneTexture, vec2( dx * ( x + 3.5 ), y ) );
+
+                mat4 bone = mat4( v1, v2, v3, v4 );
+
+                return bone;
+
+            }
+
+        #else
+
+            uniform mat4 boneGlobalMatrices[ MAX_BONES ];
+
+            mat4 getBoneMatrix( const in float i ) {
+
+                mat4 bone = boneGlobalMatrices[ int(i) ];
+                return bone;
+
+            }
+
+        #endif
+
+    #endif
+
+	varying vec2 vUv;
+    uniform bool edge;
+    varying vec3 vNormal;
 	void main() {
 		vUv = uv;
 		#ifdef USE_SKINNING
@@ -100,8 +137,11 @@
 		#endif
 		gl_Position = projectionMatrix * mvPosition;
 	}
+
+
 </script>
 <script type="x-shader/x-fragment" id="fs">
+
     uniform vec3 lightDirection;
     uniform sampler2D texture;
     uniform sampler2D texture2;
@@ -120,13 +160,15 @@
             gl_FragColor = texture2D(texture2, vUv) * smpColor;
         }
     }
+
+
 </script>
 
 <script>
 
     'use strict';
 
-    var width, height, clock, scene, sceneEdge, camera, renderer, meshFlg;
+    var width, height, clock, scene, camera, renderer, meshFlg;
     var loader = new THREE.JSONLoader();
     var ambientLight, mesh, meshEdge, action = {}, mixer, fadeAction;
 
@@ -134,7 +176,6 @@
     height = window.innerHeight;
     clock = new THREE.Clock();
     scene = new THREE.Scene();
-    sceneEdge = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(40, width / height, 1, 100);
     camera.position.set(0, 1, 4);
     renderer = new THREE.WebGLRenderer();
@@ -194,7 +235,7 @@
         if (meshFlg) {
             mesh = new THREE.SkinnedMesh(
                     geometry,
-                    shadermaterial, false
+                    shadermaterial, true
             );
         } else {
             materials.forEach(function (material) {
@@ -212,7 +253,6 @@
         meshEdge = mesh.clone();
 
         scene.add(mesh);
-        sceneEdge.add(meshEdge);
         console.log(geometry.animations)
 
         mixer = new THREE.AnimationMixer(mesh);
@@ -270,7 +310,7 @@
             meshEdge.material.side = THREE.BackSide;
             meshEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0, 0, 1);
             meshEdge.material.uniforms.edge.value = true;
-            renderer.render(sceneEdge, camera);
+            renderer.render(scene, camera);
         }
 
     })();
