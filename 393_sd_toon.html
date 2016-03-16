@@ -180,7 +180,7 @@
 
     var width, height, clock, scene, camera, renderer, meshFlg, activeActionName,controls;
     var loader = new THREE.JSONLoader();
-    var ambientLight, mesh, meshEdge, action = {}, mixer,mixerEdge, fadeAction;
+    var ambientLight, mesh, meshEdge, action = {}, mixer, fadeAction;
 
     width = window.innerWidth;
     height = window.innerHeight;
@@ -286,8 +286,8 @@
         action.run = mixer.clipAction(geometry.animations[3]);
 
         action.run.setEffectiveWeight(2);
-        action.run.setLoop(THREE.LoopOnce, 0);
-        action.run.clampWhenFinished = true;
+//        action.run.setLoop(THREE.LoopOnce, 0);
+//        action.run.clampWhenFinished = true;
         action.idle.setEffectiveWeight(2);
         action.kick.setEffectiveWeight(2);
 
