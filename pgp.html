@@ -519,7 +519,7 @@
 
         if (meshFlg) {
             meshAachanEdge.material.side = THREE.BackSide;
-            meshAachanEdge.material.uniforms.edgeColor.value = new THREE.Vector4(0.33, 0.33, 0.33, 1);
+            meshAachanEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0.0, 0.0, 1);
             meshAachanEdge.material.uniforms.edge.value = true;
             renderer.render(scene, camera);
         }
@@ -533,7 +533,7 @@
 
         if (meshFlg) {
             meshNocchiEdge.material.side = THREE.BackSide;
-            meshNocchiEdge.material.uniforms.edgeColor.value = new THREE.Vector4(0.2, 0.2, 0.6, 1);
+            meshNocchiEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0.0, 0.0, 1);
             meshNocchiEdge.material.uniforms.edge.value = true;
             renderer.render(scene, camera);
         }
@@ -547,7 +547,7 @@
 
         if (meshFlg) {
             meshKashiyukaEdge.material.side = THREE.BackSide;
-            meshKashiyukaEdge.material.uniforms.edgeColor.value = new THREE.Vector4(0.2, 0.6, 0.2, 1);
+            meshKashiyukaEdge.material.uniforms.edgeColor.value = new THREE.Vector4(1.0, 0.0, 0.0, 1);
             meshKashiyukaEdge.material.uniforms.edge.value = true;
             renderer.render(scene, camera);
         }
