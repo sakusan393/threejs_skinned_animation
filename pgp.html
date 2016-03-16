@@ -52,14 +52,34 @@
             position: fixed;
             bottom: 0;
         }
+        button{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 200px;
+            margin-left: -150px;
+            margin-top: -100px;
+            display: none;
+        }
+        .show{
+            display: block;
+        }
+        .hide{
+            display: none;
+        }
     </style>
 </head>
 <body>
 <div class="info">
+    <button id="start-button" onclick="soundPlay();">START</button>
     <div id="loading"><div class="loading-text">This site is image heavy.....</div><div><img src="images/loading-36.gif" /></div></div>
     <p>motion data<a href="http://www.perfume-global.com" target="_blank">http://perfume-global.com/project.html</a></p>
 </div>
-
+<audio controls preload="auto">
+    <source src="sound/pgp_bgm.wav" type="audio/wav">
+    <p>このブラウザは音声再生に対応していません</p>
+</audio>
 <script src="js/three.min.js"></script>
 <script src="js/controls/OrbitControls.js"></script>
 
@@ -180,6 +200,8 @@
 
     'use strict';
 
+
+
     var width, height, clock, scene, camera, renderer, meshFlg,controls;
     var loaderNocchi = new THREE.JSONLoader();
     var loaderAachan = new THREE.JSONLoader();
@@ -191,6 +213,7 @@
     var actionAachan = {}
     var actionKashiyuka = {}
     var actionNocchi = {}
+    var isSoundPlay = false;
 
     meshFlg = true;
 
@@ -470,14 +493,20 @@
         controls.update();
 
         if (!meshNocchiEdge || !meshKashiyukaEdge || !meshAachanEdge) return
+
         if(document.getElementById("loading")) document.getElementById("loading").parentNode.removeChild(document.getElementById("loading"))
 
         var delta = clock.getDelta();
 
-        if (mixerNocchi && mixerKashiyuka && mixerAachan) {
+        if (mixerNocchi && mixerKashiyuka && mixerAachan && isSoundPlay) {
             mixerNocchi.update(delta);
             mixerKashiyuka.update(delta);
             mixerAachan.update(delta);
+        }else{
+            mixerNocchi.update(0);
+            mixerKashiyuka.update(0);
+            mixerAachan.update(0);
+            addClass(document.getElementById("start-button"), "show");
         }
 
         renderer.clear();
@@ -525,6 +554,48 @@
         }
 
     })();
+
+    function hasClass(el, className) {
+        if (el.classList)
+            return el.classList.contains(className)
+        else
+            return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'))
+    }
+
+    function addClass(el, className) {
+        if (el.classList)
+            el.classList.add(className)
+        else if (!hasClass(el, className)) el.className += " " + className
+    }
+
+    function removeClass(el, className) {
+        if (el.classList)
+            el.classList.remove(className)
+        else if (hasClass(el, className)) {
+            var reg = new RegExp('(\\s|^)' + className + '(\\s|$)')
+            el.className=el.className.replace(reg, ' ')
+        }
+    }
+
+    var audio = new Audio();
+
+    audio.volume = 0.3;
+    audio.autoplay = false
+    audio.addEventListener("canplay", function(){
+        audio.play();
+    });
+
+    audio.addEventListener("playing", function(){
+        isSoundPlay = true;
+        audio.play();
+    });
+
+    function soundPlay(){
+//        document.getElementById("start-button").parentNode.removeChild(document.getElementById("start-button"))
+        audio.src = "sound/pgp_bgm.wav"
+        audio.load();
+        alert(11);
+    }
 
 </script>
 
