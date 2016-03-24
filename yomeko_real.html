@@ -51,11 +51,13 @@
 </div>
 
 <script src="js/three.min.75.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+
 <script>
 
     'use strict';
 
-    var width, height, clock, scene, camera, renderer;
+    var width, height, clock, scene, camera, renderer,controls;
     var loader = new THREE.JSONLoader();
     var ambientLight, mesh, action = {}, mixer, fadeAction;
 
@@ -69,6 +71,15 @@
     renderer.setSize(width, height);
     renderer.setClearColor(0xf0e0c0);
     document.body.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    //controls.addEventListener( 'change', render ); // add this only if there is no animation loop (requestAnimationFrame)
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = .4
+    controls.target = new THREE.Vector3(0, 1, 0);
 
 
     ambientLight = new THREE.AmbientLight(0xffffff);
@@ -98,7 +109,8 @@
                 geometry,
                 new THREE.MeshFaceMaterial(materials)
         );
-        var scale = 0.45;
+        mesh.position.y = -1
+        var scale = 0.8
         mesh.scale.set(scale, scale, scale);
 
         scene.add(mesh);
@@ -140,6 +152,7 @@
     (function update() {
 
         requestAnimationFrame(update);
+        controls.update();
 
         var delta = clock.getDelta();
 
@@ -147,7 +160,6 @@
             mixer.update(delta);
         }
 
-        if (mesh)  mesh.rotation.y += 0.01;
         renderer.render(scene, camera);
 
     })();
