@@ -85,7 +85,7 @@
     }
 
 
-    loader.load('./models/yomeko/threejs_yomeko.json', function (geometry, materials) {
+    loader.load('./models/yomeko/threejs_yomeko_face_anime.json', function (geometry, materials) {
 
         materials.forEach(function (material) {
 
@@ -103,13 +103,18 @@
 
         scene.add(mesh);
         mixer = new THREE.AnimationMixer(mesh);
+        console.log(geometry)
         action.idle = mixer.clipAction(geometry.animations[2]);
-        action.run = mixer.clipAction(geometry.animations[3]);
+        action.run = mixer.clipAction(geometry.animations[4]);
 
         action.run.setEffectiveWeight(2);
         action.idle.setEffectiveWeight(2);
 
         action.run.setDuration(1).play();
+
+        var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'laugh', geometry.morphTargets[0], 30 );
+        console.log(clip)
+        mixer.clipAction( clip ).setDuration( 1 ).play();
 
         onWindowResize();
 
