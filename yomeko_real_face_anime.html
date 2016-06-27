@@ -75,7 +75,7 @@
     scene.add(ambientLight);
 
     var directionalLight = new THREE.DirectionalLight(0xffEECC, 0.3);
-    directionalLight.position.set(0, 1, 1);
+    directionalLight.position.set(-1, 1, -1);
     scene.add(directionalLight);
 
     function onWindowResize() {
@@ -90,8 +90,8 @@
         materials.forEach(function (material) {
 
             material.skinning = true;
+            material.morphTargets = true;
             if(material.name == "hair") material.side = THREE.DoubleSide
-
         });
 
         mesh = new THREE.SkinnedMesh(
@@ -103,16 +103,16 @@
 
         scene.add(mesh);
         mixer = new THREE.AnimationMixer(mesh);
-        console.log(geometry)
+        console.log(geometry.animations)
         action.idle = mixer.clipAction(geometry.animations[2]);
-        action.run = mixer.clipAction(geometry.animations[4]);
+        action.run = mixer.clipAction(geometry.animations[7]);
 
         action.run.setEffectiveWeight(2);
         action.idle.setEffectiveWeight(2);
 
         action.run.setDuration(1).play();
 
-        var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'laugh', geometry.morphTargets[0], 30 );
+        var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'a', geometry.morphTargets, 30 );
         console.log(clip)
         mixer.clipAction( clip ).setDuration( 1 ).play();
 
@@ -152,7 +152,10 @@
             mixer.update(delta);
         }
 
-        if (mesh)  mesh.rotation.y += 0.01;
+        if (mesh)  {
+            mesh.rotation.x = Math.PI / 180 * -90;
+            mesh.rotation.z += 0.01
+        }
         renderer.render(scene, camera);
 
     })();

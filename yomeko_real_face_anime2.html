@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=640">
+    <title>animation393</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            width: 100%
+        }
+
+        canvas {
+            display: block;
+        }
+
+        a {
+            color: #0080ff;
+        }
+
+        .info {
+            color: #fff;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            font-size: 50px;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        p {
+            position: fixed;
+            bottom: 0;
+
+        }
+    </style>
+</head>
+<body>
+<div class="info">
+    <button onclick="fadeAction( 'idle' );">idle</button>
+    <button onclick="fadeAction( 'run' );">run</button>
+    <p><a href="http://yomotsu.net/blog/2015/10/31/three-r73-anim.html">ヨモツネット:New skinned mesh animation system in three.js r73 and r74</a></p>
+</div>
+
+<script src="js/three.min.js"></script>"
+<script>
+
+    'use strict';
+
+    var width, height, clock, scene, camera, renderer;
+    var loader = new THREE.JSONLoader();
+    var ambientLight, mesh, action = {}, mixer, fadeAction;
+
+    width = window.innerWidth;
+    height = window.innerHeight;
+    clock = new THREE.Clock();
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(40, width / height, 1, 100);
+    camera.position.set(0, 1, 4);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(width, height);
+    renderer.setClearColor(0xf0e0c0);
+    document.body.appendChild(renderer.domElement);
+
+
+    ambientLight = new THREE.AmbientLight(0xffffff);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight(0xffEECC, 0.3);
+    directionalLight.position.set(1, -1, -1);
+    scene.add(directionalLight);
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+
+    loader.load('./models/yomeko/threejs_yomeko_face_anime2.json', function (geometry, materials) {
+
+        materials.forEach(function (material) {
+
+            material.skinning = true;
+            material.morphTargets = true;
+            if(material.name == "hair") material.side = THREE.DoubleSide
+        });
+
+        mesh = new THREE.SkinnedMesh(
+                geometry,
+                new THREE.MeshFaceMaterial(materials)
+        );
+        var scale = 0.45;
+        mesh.scale.set(scale, scale, scale);
+
+        scene.add(mesh);
+        mixer = new THREE.AnimationMixer(mesh);
+        console.log(geometry.animations)
+        action.idle = mixer.clipAction(geometry.animations[2]);
+        action.run = mixer.clipAction(geometry.animations[3]);
+
+        action.run.setEffectiveWeight(2);
+        action.idle.setEffectiveWeight(2);
+
+        action.run.setDuration(1).play();
+
+        var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'a', geometry.morphTargets, 30 );
+        console.log(clip)
+        mixer.clipAction( clip ).setDuration( 1 ).play();
+
+        onWindowResize();
+
+    });
+
+
+    fadeAction = function () {
+
+        var activeActionName = 'run';
+
+        return function (name) {
+
+            var from = action[activeActionName].play();
+            var to = action[name].play();
+
+            from.enabled = true;
+            to.enabled = true;
+
+            from.crossFadeTo(to, .3);
+            activeActionName = name;
+
+        }
+
+    }();
+
+
+    ;
+    (function update() {
+
+        requestAnimationFrame(update);
+
+        var delta = clock.getDelta();
+
+        if (mixer) {
+            mixer.update(delta);
+        }
+
+        if (mesh)  {
+            mesh.rotation.x = Math.PI / 180 * 0;
+            mesh.rotation.z += 0.01
+        }
+        renderer.render(scene, camera);
+
+    })();
+
+</script>
+
+</body>
+</html>
