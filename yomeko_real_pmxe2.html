@@ -103,15 +103,15 @@
 
         scene.add(mesh);
         mixer = new THREE.AnimationMixer(mesh);
-        action.idle = mixer.clipAction(geometry.animations[4]);
-        action.run = mixer.clipAction(geometry.animations[5]);
+        action.idle = mixer.clipAction(geometry.animations[0]);
+        action.run = mixer.clipAction(geometry.animations[1]);
 
         action.run.setEffectiveWeight(2);
         action.idle.setEffectiveWeight(2);
 
         action.run.setDuration(1).play();
 
-        var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'a', geometry.morphTargets, 30 );
+        var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'a', geometry.morphTargets, 3 );
         console.log(geometry.animations)
         console.log(clip)
         mixer.clipAction( clip ).setDuration( 1 ).play();

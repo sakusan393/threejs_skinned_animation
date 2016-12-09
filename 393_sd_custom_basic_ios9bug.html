@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=640">
+    <title>Threejs SkinnedMesh Toonshader</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #FFF;
+            width: 100%
+        }
+
+        #canvas3D {
+            display: block;
+            position: absolute;
+            top: -800px;
+            left: 0;
+        }
+        #threejs{
+            position: relative;
+            height: 500px;
+            /*overflow: hidden;*/
+        }
+
+        a {
+            color: #0080ff;
+        }
+
+        .info {
+            color: #fff;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            z-index: 10;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            font-size: 50px;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        #loading {
+            margin-top: 100px
+        }
+
+        p {
+            position: fixed;
+            bottom: 0;
+
+        }
+    </style>
+</head>
+<body>
+<div class="info">
+    <button onclick="fadeAction( 'idle' );">idle</button>
+    <button onclick="fadeAction( 'run' );">run</button>
+    <button onclick="fadeAction( 'kick' );">kick</button>
+    <div id="loading"><img src="images/loading-36.gif"/></div>
+    <p><a href="http://yomotsu.net/blog/2015/10/31/three-r73-anim.html">ヨモツネット:New skinned mesh animation system in
+        three.js r73 and r74</a></p>
+</div>
+<div id="threejs">
+    <p>hoge</p>
+    <canvas id="canvas3D"></canvas>
+</div>
+
+<script src="js/three.min.js"></script>"
+<script src="js/controls/OrbitControls.js"></script>
+
+<script>
+
+    'use strict';
+
+    var width, height, clock, scene, camera, renderer, activeActionName, controls;
+    var loader = new THREE.JSONLoader();
+    var ambientLight, mesh, meshEdge, action = {}, mixer, fadeAction;
+
+    var canvas3D = document.getElementById("canvas3D")
+
+    width = window.innerWidth;
+    height = window.innerHeight;
+    clock = new THREE.Clock();
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(40, width / height, 1, 100);
+    camera.position.set(0, 1, 4);
+    renderer = new THREE.WebGLRenderer({canvas: canvas3D, alpha: false, antialias: true});
+    renderer.setSize(width, height);
+    renderer.setClearColor(0xffffff);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = .4
+    controls.target = new THREE.Vector3(0, 1, 0);
+
+
+    ambientLight = new THREE.AmbientLight(0xffffff);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight(0xffEECC, 0.3);
+    directionalLight.position.set(0, 1, 1);
+    scene.add(directionalLight);
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+
+    loader.load('./models/393/threejs_393_texture.json', function (geometry, materials) {
+
+        var uniform = THREE.ShaderLib["basic"].uniforms;
+        uniform.map = {
+            type: 't',
+            value: new THREE.TextureLoader().load('models/393/threejs_393_texture.png')
+        }
+
+        var shadermaterial = new THREE.ShaderMaterial({
+            vertexColors: THREE.FaceColors,
+            fragmentShader: THREE.ShaderChunk['meshbasic_frag'],
+            vertexShader: THREE.ShaderChunk['meshbasic_vert'],
+            uniforms: uniform,
+            defines: {"USE_MAP": ""}
+        });
+        console.log("materials  :", materials);
+
+        shadermaterial.skinning = true;
+
+        mesh = new THREE.SkinnedMesh(
+                geometry,
+                shadermaterial, true
+        );
+        for (var i = 0; i < geometry.animations.length; i++) {
+            console.log(geometry.animations[i].name)
+        }
+
+        var scale = 0.3;
+        mesh.scale.set(scale, scale, scale);
+        meshEdge = mesh.clone();
+
+        scene.add(mesh);
+
+        mixer = new THREE.AnimationMixer(mesh);
+        console.log(geometry.animations)
+        action.idle = mixer.clipAction(geometry.animations[1]);
+        action.kick = mixer.clipAction(geometry.animations[2]);
+        action.run = mixer.clipAction(geometry.animations[3]);
+
+        action.run.setEffectiveWeight(2);
+//        action.run.setLoop(THREE.LoopOnce, 0);
+//        action.run.clampWhenFinished = true;
+        action.idle.setEffectiveWeight(2);
+        action.kick.setEffectiveWeight(2);
+
+        action.run.setDuration(2)
+        action.kick.setDuration(3.3).play();
+        onWindowResize();
+
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000, wireframe: true});
+        planeMaterial.side = THREE.doubleSided;
+        var plane = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20, 20, 20),
+                planeMaterial
+        );
+        plane.rotation.x = Math.PI / 180 * 90;
+
+        scene.add(plane);
+
+    });
+
+
+    fadeAction = function () {
+
+        activeActionName = 'kick';
+
+        return function (name) {
+
+            var from = action[activeActionName].play();
+            var to = action[name].reset();
+            var to = action[name].play();
+
+            from.enabled = true;
+            to.enabled = true;
+
+            from.crossFadeTo(to, .3);
+            activeActionName = name;
+        }
+    }();
+
+
+    ;
+    (function update() {
+
+        requestAnimationFrame(update);
+
+        if (mesh) if (document.getElementById("loading")) document.getElementById("loading").parentNode.removeChild(document.getElementById("loading"))
+
+        var delta = clock.getDelta();
+        if (mixer) {
+            mixer.update(delta * 1);
+        }
+        controls.update();
+
+        renderer.render(scene, camera);
+    })();
+
+</script>
+
+</body>
+</html>
