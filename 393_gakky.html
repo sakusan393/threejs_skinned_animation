@@ -132,13 +132,7 @@
   var youtubeReady = false;
   function onPlayerStateChange(event) {
     console.log('onPlayerStateChange', event.target)
-    if (event.data == YT.PlayerState.PLAYING && !done) {
-      done = true;
-      setTimeout(function(){
-        actionAachan.run.play();
-        actionNocchi.run.play();
-      }, 300);
-    }
+    console.log(youtubePlayer.getCurrentTime());
   }
 </script>
 <script>
@@ -271,7 +265,13 @@
 
     controls.update();
 
-    if (!meshNocchi || !meshAachan) return
+    if (!meshNocchi || !meshAachan) return;
+
+    if(youtubePlayer.getCurrentTime() > 0.3 && !done) {
+      done = true;
+      actionAachan.run.play();
+      actionNocchi.run.play();
+    }
 
     if (document.getElementById("loading")) document.getElementById("loading").parentNode.removeChild(document.getElementById("loading"))
     renderer.clear();
