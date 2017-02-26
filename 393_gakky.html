@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=640">
+    <title>animation393</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #FFF;
+            width: 100%
+        }
+
+        canvas {
+            display: block;
+        }
+
+        p {
+            color: #000;
+        }
+
+        a {
+            color: #0080ff;
+        }
+
+        .info {
+            color: #fff;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            font-size: 50px;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        #loading {
+            margin-top: 100px
+        }
+
+        .loading-text {
+            margin-bottom: 10px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        p {
+            position: fixed;
+            bottom: 0;
+        }
+
+        button {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 200px;
+            margin-left: -150px;
+            margin-top: -100px;
+            display: none;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .hide {
+            display: none;
+        }
+        iframe {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="info">
+    <button id="start-button" onclick="soundPlay();">START</button>
+    <div id="loading">
+        <div class="loading-text">This site is image heavy.....</div>
+        <div><img src="images/loading-36.gif"/></div>
+    </div>
+</div>
+<iframe id="player" width="350" height="200" src="https://www.youtube.com/embed/jhOVibLEDhA?enablejsapi=1" frameborder="0" allowfullscreen></iframe>
+<script src="js/three.min.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+
+<script>
+  // 2. This code loads the IFrame Player API code asynchronously.
+  var tag = document.createElement('script');
+  var youtubePlayer = null;
+
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  var player;
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      height: '360',
+      width: '640',
+      videoId: 'M7lc1UVf-VE',
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+
+  function onPlayerReady(event) {
+    console.log('ready', event.target)
+    youtubePlayer = event.target;
+    youtubeReady = true;
+    checkLoaded();
+  }
+
+  var done = false;
+  var youtubeReady = false;
+  function onPlayerStateChange(event) {
+    console.log('onPlayerStateChange', event.target)
+    if (event.data == YT.PlayerState.PLAYING && !done) {
+      done = true;
+      setTimeout(function(){
+        actionAachan.run.play();
+        actionNocchi.run.play();
+      }, 300);
+    }
+  }
+</script>
+<script>
+  'use strict';
+
+  var width, height, clock, scene, camera, renderer, meshFlg, controls;
+  var loaderNocchi = new THREE.JSONLoader();
+  var loader = new THREE.JSONLoader();
+  var ambientLight, action = {};
+  var meshAachan, meshNocchi, mixerAachan, mixerNocchi;
+  var actionAachan = {}
+  var actionNocchi = {}
+  var isSoundPlay = false;
+
+  meshFlg = true;
+
+  width = window.innerWidth;
+  height = window.innerHeight;
+  clock = new THREE.Clock();
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(40, width / height, 1, 100);
+  camera.position.set(0, 1.5, 4);
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(width, height);
+  renderer.setClearColor(0xFFFFFF);
+  renderer.clear();
+  renderer.autoClear = false;
+  document.body.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.25;
+  controls.enableZoom = true;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = .4
+  controls.target = new THREE.Vector3(0, 1, 0);
+
+  ambientLight = new THREE.AmbientLight(0xffffff);
+  scene.add(ambientLight);
+
+  var directionalLight = new THREE.DirectionalLight(0xffEECC, 0.3);
+  directionalLight.position.set(0, 1, 1);
+  scene.add(directionalLight);
+
+  var planeMaterial = new THREE.MeshBasicMaterial({color: 0xFFCCCC, wireframe: true});
+  planeMaterial.side = THREE.doubleSided;
+  var plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 20, 20, 20),
+    planeMaterial
+  );
+  plane.rotation.x = Math.PI / 180 * 90;
+
+  scene.add(plane);
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function checkLoaded(){
+    if (!meshNocchi || !meshAachan || !youtubeReady) return;
+    youtubePlayer.playVideo();
+  }
+
+
+  loader.load('./models/gakky/gakky_koidance.json', function (geometry, materials) {
+    materials.forEach( function ( material ) {
+      material.skinning = true;
+    } );
+
+    meshAachan = new THREE.SkinnedMesh(
+      geometry,
+      new THREE.MultiMaterial( materials )
+    );
+
+    var scale = 0.5;
+    meshAachan.scale.set(scale, scale, scale);
+
+    scene.add(meshAachan);
+
+    mixerAachan = new THREE.AnimationMixer(meshAachan);
+    actionAachan.run = mixerAachan.clipAction(geometry.animations[3]);
+
+    meshAachan.position.x = 0.5;
+    actionAachan.run.setLoop(THREE.LoopOnce, 0);
+
+    onWindowResize();
+
+    checkLoaded();
+
+  });
+
+  loaderNocchi.load('./models/393/393_koidance.json', function (geometry, materials) {
+    materials.forEach( function ( material ) {
+      material.skinning = true;
+    } );
+
+    meshNocchi = new THREE.SkinnedMesh(
+      geometry,
+      new THREE.MultiMaterial( materials )
+    );
+
+    var scale = 0.5;
+    meshNocchi.scale.set(scale, scale, scale);
+    meshNocchi.position.x = -0.5
+
+    scene.add(meshNocchi);
+
+    mixerNocchi = new THREE.AnimationMixer(meshNocchi);
+    actionNocchi.run = mixerNocchi.clipAction(geometry.animations[0]);
+
+    actionNocchi.run.setLoop(THREE.LoopOnce, 0);
+
+    onWindowResize();
+
+    checkLoaded();
+  });
+
+  (function update() {
+
+    requestAnimationFrame(update);
+
+    controls.update();
+
+    if (!meshNocchi || !meshAachan) return
+
+    if (document.getElementById("loading")) document.getElementById("loading").parentNode.removeChild(document.getElementById("loading"))
+    renderer.clear();
+    var delta = clock.getDelta();
+
+    if (mixerNocchi && mixerAachan) {
+      mixerNocchi.update(delta);
+      mixerAachan.update(delta);
+    } else {
+      mixerNocchi.update(0);
+      mixerAachan.update(0);
+      if (!isSoundPlay) addClass(document.getElementById("start-button"), "show");
+    }
+
+    renderer.render(scene, camera);
+  })();
+
+  function hasClass(el, className) {
+    if (el.classList)
+      return el.classList.contains(className)
+    else
+      return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'))
+  }
+
+  function addClass(el, className) {
+    if (el.classList)
+      el.classList.add(className)
+    else if (!hasClass(el, className)) el.className += " " + className
+  }
+
+  function removeClass(el, className) {
+    if (el.classList)
+      el.classList.remove(className)
+    else if (hasClass(el, className)) {
+      var reg = new RegExp('(\\s|^)' + className + '(\\s|$)')
+      el.className = el.className.replace(reg, ' ')
+    }
+  }
+
+</script>
+
+</body>
+</html>
